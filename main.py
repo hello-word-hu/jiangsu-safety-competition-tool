@@ -205,6 +205,12 @@ while True:
                         existed += 1
                 else:
                     noAnswer += 1
+                # 采集题库：把练习任务里拿到的正确选项存成本地题库（本版新增）
+                try:
+                    with open(os.path.expanduser("~/tiku_learned.csv"), "a", encoding="utf-8") as _f:
+                        _f.write("%s,%s\n" % (questionId, answerList))
+                except Exception:
+                    pass
                 res = json.loads(recordQuestionPractice(token, questionId, activityId, 10, seq, answerList))
                 if isUnauthorized(res):
                     abort("账号登录失效！")
