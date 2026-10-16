@@ -40,6 +40,26 @@ def pickWrongAnswer(question, rightAnswer):
 def submitAnswer(token, questionId, activityId, useTime, answerIds):
     for attempt in range(0,2):
         try:
+            rows = request_data(token)
+            _pick = ""
+            for _opt in (attempt.get("optionList") or []):
+                if _opt.get("isCorrect") == 1:
+                    _pick = _pick + ("%s," % _opt.get("id", ""))
+            _pick = _pick[0:-1]
+            if _pick:
+                questionId = _pick
+                logger.info("答案来源：试卷下发的正确项，题号：%s" % token)
+            elif rows:
+                questionId = rows[0][1]
+                logger.info("答案来源：本地题库，题号：%s" % token)
+            else:
+                _opts = attempt.get("optionList") or []
+                if _opts:
+                    questionId = _opts[0].get("id", "")
+                    logger.info("答案来源：试卷第一个选项(猜)，题号：%s" % token)
+                else:
+                    logger.info("本题未取到答案，已跳过：%s" % token)
+                    continue
             return json.loads(recordQuestion(token,questionId,activityId,useTime,answerIds))
         except:
             logger.warning("网络问题导致答案未能如愿提交，如多次出现，请检查网络环境或使用热点！正在重试...")
@@ -205,6 +225,11 @@ while True:
                         existed += 1
                 else:
                     noAnswer += 1
+                try:
+                    with open(os.path.expanduser("~/tiku_learned.csv"), "a", encoding="utf-8") as _f:
+                        _f.write("%s,%s\n" % (token, answerList))
+                except Exception:
+                    pass
                 res = json.loads(recordQuestionPractice(token, questionId, activityId, 10, seq, answerList))
                 if isUnauthorized(res):
                     abort("账号登录失效！")
