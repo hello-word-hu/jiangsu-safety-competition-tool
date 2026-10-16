@@ -1,0 +1,24 @@
+name: build-release
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: windows-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+      - run: pip install -r requirements.txt
+      - run: pip install pyinstaller
+      - run: pyinstaller -F -n jiangsu-safety-competition main.py
+      - run: certutil -hashfile dist/jiangsu-safety-competition.exe SHA256 > dist/SHA256.txt
+      - uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/jiangsu-safety-competition.exe
+            dist/SHA256.txt
